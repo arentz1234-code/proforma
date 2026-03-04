@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PARSE_DOCUMENT_SYSTEM_PROMPT } from '@/lib/prompts';
 
+// Vercel serverless config
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     // Step 1: Parse form data
