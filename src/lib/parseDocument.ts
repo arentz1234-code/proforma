@@ -1,7 +1,7 @@
 import { DealData } from '@/types';
 import * as XLSX from 'xlsx';
 
-export async function parseDocument(file: File, apiKey: string): Promise<DealData> {
+export async function parseDocument(file: File): Promise<DealData> {
   let textContent = '';
 
   if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
@@ -17,7 +17,6 @@ export async function parseDocument(file: File, apiKey: string): Promise<DealDat
   }
 
   const formData = new FormData();
-  formData.append('apiKey', apiKey);
 
   if (textContent) {
     formData.append('text', textContent);

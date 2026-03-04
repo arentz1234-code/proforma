@@ -6,13 +6,12 @@ import { DealData } from '@/types';
 import { parseDocument } from '@/lib/parseDocument';
 
 interface FileUploadProps {
-  apiKey: string;
   onDataParsed: (data: DealData) => void;
   isProcessing: boolean;
   setIsProcessing: (v: boolean) => void;
 }
 
-export default function FileUpload({ apiKey, onDataParsed, isProcessing, setIsProcessing }: FileUploadProps) {
+export default function FileUpload({ onDataParsed, isProcessing, setIsProcessing }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
@@ -20,10 +19,6 @@ export default function FileUpload({ apiKey, onDataParsed, isProcessing, setIsPr
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
-    if (!apiKey) {
-      setError('Please enter your API key first');
-      return;
-    }
 
     const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
     const validExts = ['.pdf', '.xlsx', '.xls'];
@@ -40,8 +35,8 @@ export default function FileUpload({ apiKey, onDataParsed, isProcessing, setIsPr
     setStatus('Reading document...');
 
     try {
-      setStatus('Analyzing with Claude AI...');
-      const data = await parseDocument(file, apiKey);
+      setStatus('Analyzing with Gemini AI...');
+      const data = await parseDocument(file);
       setStatus('');
       onDataParsed(data);
     } catch (err) {

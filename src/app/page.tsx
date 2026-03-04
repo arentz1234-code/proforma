@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { DealData, Scenario, ScenarioAssumptions } from '@/types';
 import { calcScenarioResults } from '@/lib/calculations';
 import TabNavigation, { TabPanel } from '@/components/ui/TabNavigation';
-import ApiKeyInput from '@/components/ApiKeyInput';
 import FileUpload from '@/components/FileUpload';
 import OverviewTab from '@/components/OverviewTab';
 import DealEvaluationTab from '@/components/DealEvaluationTab';
 import ScenarioManager from '@/components/ScenarioManager';
 import ReverseAnalysis from '@/components/ReverseAnalysis';
 import NapkinCalculator, { NapkinData } from '@/components/NapkinCalculator';
-import ManualEntry from '@/components/ManualEntry';
 import ExportButton from '@/components/ExportButton';
 import { FileText, Calculator, Upload, ArrowLeft, BarChart3 } from 'lucide-react';
 
@@ -25,18 +23,12 @@ const tabs = [
 ];
 
 export default function Home() {
-  const [apiKey, setApiKey] = useState('');
   const [dealData, setDealData] = useState<DealData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [entryMode, setEntryMode] = useState<EntryMode>('select');
   const [showDetailedView, setShowDetailedView] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('gemini_api_key');
-    if (saved) setApiKey(saved);
-  }, []);
 
   const handleDataParsed = (data: DealData) => {
     setDealData(data);
@@ -217,10 +209,8 @@ export default function Home() {
               <ArrowLeft size={16} />
               Back
             </button>
-            <div className="max-w-2xl mx-auto space-y-6">
-              <ApiKeyInput apiKey={apiKey} onApiKeyChange={setApiKey} />
+            <div className="max-w-2xl mx-auto">
               <FileUpload
-                apiKey={apiKey}
                 onDataParsed={handleDataParsed}
                 isProcessing={isProcessing}
                 setIsProcessing={setIsProcessing}

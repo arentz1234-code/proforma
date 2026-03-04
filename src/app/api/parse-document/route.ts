@@ -5,12 +5,12 @@ import { PARSE_DOCUMENT_SYSTEM_PROMPT } from '@/lib/prompts';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const apiKey = formData.get('apiKey') as string;
     let documentText = formData.get('text') as string | null;
     const file = formData.get('file') as File | null;
 
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'API key is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
