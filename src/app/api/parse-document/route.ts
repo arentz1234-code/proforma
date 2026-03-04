@@ -13,12 +13,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Gemini API key not configured. Check Vercel environment variables.' }, { status: 500 });
     }
 
-    // Debug: Log key format (not the actual key)
-    console.log('API Key length:', apiKey.length);
-    console.log('API Key starts with AIza:', apiKey.startsWith('AIza'));
-
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     // If PDF file was uploaded, extract text
     if (file && !documentText && file.name.toLowerCase().endsWith('.pdf')) {
@@ -46,22 +42,17 @@ export async function POST(request: NextRequest) {
 
     return processResponse(responseText);
   } catch (error: unknown) {
-    const errMessage = error instanceof Error ? error.message : 'Unknown error';
-    const apiKey = process.env.GEMINI_API_KEY;
-
+    let errMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Parse document error:', errMessage);
-    console.error('API Key exists:', !!apiKey);
-    console.error('API Key length:', apiKey?.length);
 
-    // Return detailed error for debugging
-    return NextResponse.json({
-      error: errMessage,
-      debug: {
-        keyExists: !!apiKey,
-        keyLength: apiKey?.length,
-        keyPrefix: apiKey?.slice(0, 4)
-      }
-    }, { status: 500 });
+    // User-friendly error messages
+    if (errMessage.includes('429') || errMessage.includes('quota')) {
+      errMessage = 'Rate limit reached. Please wait a minute and try again.';
+    } else if (errMessage.includes('API key')) {
+      errMessage = 'Invalid API key. Please check configuration.';
+    }
+
+    return NextResponse.json({ error: errMessage }, { status: 500 });
   }
 }
 
