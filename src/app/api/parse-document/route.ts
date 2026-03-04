@@ -8,10 +8,14 @@ export async function POST(request: NextRequest) {
     let documentText = formData.get('text') as string | null;
     const file = formData.get('file') as File | null;
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
-      return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 });
+      return NextResponse.json({ error: 'Gemini API key not configured. Check Vercel environment variables.' }, { status: 500 });
     }
+
+    // Debug: Log key format (not the actual key)
+    console.log('API Key length:', apiKey.length);
+    console.log('API Key starts with AIza:', apiKey.startsWith('AIza'));
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -42,23 +46,22 @@ export async function POST(request: NextRequest) {
 
     return processResponse(responseText);
   } catch (error: unknown) {
-    let errMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errMessage = error instanceof Error ? error.message : 'Unknown error';
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    console.error('Parse document error:', error);
-    console.error('Error message:', errMessage);
+    console.error('Parse document error:', errMessage);
+    console.error('API Key exists:', !!apiKey);
+    console.error('API Key length:', apiKey?.length);
 
-    // Provide more helpful error messages
-    if (errMessage.includes('API_KEY') || errMessage.includes('API key') || errMessage.includes('401')) {
-      errMessage = 'Invalid API key. Please check your Google Gemini API key and try again.';
-    } else if (errMessage.includes('RATE_LIMIT') || errMessage.includes('429') || errMessage.includes('quota')) {
-      errMessage = 'Rate limit exceeded. Please wait a moment and try again.';
-    } else if (errMessage.includes('timeout') || errMessage.includes('DEADLINE')) {
-      errMessage = 'Request timed out. Please try again.';
-    } else if (errMessage.includes('pattern')) {
-      errMessage = 'API configuration error. Please check server logs.';
-    }
-
-    return NextResponse.json({ error: errMessage }, { status: 500 });
+    // Return detailed error for debugging
+    return NextResponse.json({
+      error: errMessage,
+      debug: {
+        keyExists: !!apiKey,
+        keyLength: apiKey?.length,
+        keyPrefix: apiKey?.slice(0, 4)
+      }
+    }, { status: 500 });
   }
 }
 
