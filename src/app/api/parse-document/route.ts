@@ -8,65 +8,39 @@ export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
-    // Step 1: Parse form data
-    let formData;
+    // Parse JSON body (text extracted client-side)
+    let body;
     try {
-      formData = await request.formData();
+      body = await request.json();
     } catch (e) {
-      return NextResponse.json({ error: 'Failed to parse form data', step: 1 }, { status: 400 });
+      return NextResponse.json({ error: 'Failed to parse request body' }, { status: 400 });
     }
 
-    const textContent = formData.get('text') as string | null;
-    const file = formData.get('file') as File | null;
+    const textContent = body.text as string | null;
 
-    // Step 2: Check API key
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY not set in environment', step: 2 }, { status: 500 });
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    // Step 3: Initialize Gemini
-    let genAI, model;
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    if (!textContent) {
+      return NextResponse.json({ error: 'No document text provided' }, { status: 400 });
+    }
+
+    // Analyze document with Gemini
+    let result;
     try {
-      genAI = new GoogleGenerativeAI(apiKey);
-      model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const prompt = `${PARSE_DOCUMENT_SYSTEM_PROMPT}\n\nAnalyze this document:\n\n${textContent.slice(0, 100000)}`;
+      result = await model.generateContent(prompt);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown';
-      return NextResponse.json({ error: `Gemini init failed: ${msg}`, step: 3 }, { status: 500 });
-    }
-
-    let result;
-
-    if (textContent) {
-      // Step 4a: Text content
-      try {
-        const prompt = `${PARSE_DOCUMENT_SYSTEM_PROMPT}\n\nAnalyze this document:\n\n${textContent.slice(0, 50000)}`;
-        result = await model.generateContent(prompt);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Unknown';
-        return NextResponse.json({ error: `Text analysis failed: ${msg}`, step: '4a' }, { status: 500 });
+      if (msg.includes('429') || msg.includes('quota')) {
+        return NextResponse.json({ error: 'Rate limit reached. Please wait a minute.' }, { status: 429 });
       }
-    } else if (file) {
-      // Step 4b: PDF file
-      try {
-        const bytes = await file.arrayBuffer();
-        const base64 = Buffer.from(bytes).toString('base64');
-
-        result = await model.generateContent([
-          {
-            inlineData: {
-              mimeType: file.type || 'application/pdf',
-              data: base64,
-            },
-          },
-          { text: PARSE_DOCUMENT_SYSTEM_PROMPT },
-        ]);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Unknown';
-        return NextResponse.json({ error: `PDF analysis failed: ${msg}`, step: '4b' }, { status: 500 });
-      }
-    } else {
-      return NextResponse.json({ error: 'No document provided', step: 4 }, { status: 400 });
+      return NextResponse.json({ error: `Analysis failed: ${msg}` }, { status: 500 });
     }
 
     // Step 5: Process response
