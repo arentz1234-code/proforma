@@ -158,17 +158,17 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full">
               {/* Upload OM Card */}
               <button
                 onClick={() => setEntryMode('upload')}
-                className="group p-10 rounded-2xl border-2 border-[var(--border-color)] bg-[var(--bg-card)] hover:border-[var(--accent-blue)] hover:bg-[var(--bg-card-hover)] transition-all text-left"
+                className="group p-8 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] hover:border-[var(--accent-blue)] hover:shadow-lg transition-all text-left"
               >
-                <div className="w-16 h-16 rounded-xl bg-[var(--accent-blue)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent-blue)]/20 transition-colors">
-                  <Upload size={32} className="text-[var(--accent-blue)]" />
+                <div className="w-14 h-14 rounded-lg bg-[var(--accent-blue)]/10 flex items-center justify-center mb-5 group-hover:bg-[var(--accent-blue)]/15 transition-colors">
+                  <Upload size={28} className="text-[var(--accent-blue)]" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Upload an OM</h2>
-                <p className="text-[var(--text-muted)]">
+                <h2 className="text-lg font-semibold mb-2">Upload an OM</h2>
+                <p className="text-sm text-[var(--text-muted)]">
                   Upload a PDF or Excel offering memorandum and let AI extract the key data automatically
                 </p>
               </button>
@@ -176,13 +176,13 @@ export default function Home() {
               {/* Quick Underwriting Card */}
               <button
                 onClick={() => setEntryMode('napkin')}
-                className="group p-10 rounded-2xl border-2 border-[var(--border-color)] bg-[var(--bg-card)] hover:border-[var(--accent-green)] hover:bg-[var(--bg-card-hover)] transition-all text-left"
+                className="group p-8 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] hover:border-[var(--accent-blue)] hover:shadow-lg transition-all text-left"
               >
-                <div className="w-16 h-16 rounded-xl bg-[var(--accent-green)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent-green)]/20 transition-colors">
-                  <Calculator size={32} className="text-[var(--accent-green)]" />
+                <div className="w-14 h-14 rounded-lg bg-[var(--accent-blue)]/10 flex items-center justify-center mb-5 group-hover:bg-[var(--accent-blue)]/15 transition-colors">
+                  <Calculator size={28} className="text-[var(--accent-blue)]" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Quick Underwriting</h2>
-                <p className="text-[var(--text-muted)]">
+                <h2 className="text-lg font-semibold mb-2">Quick Underwriting</h2>
+                <p className="text-sm text-[var(--text-muted)]">
                   Napkin math calculator for fast deal screening with units, rent, and expense ratio
                 </p>
               </button>

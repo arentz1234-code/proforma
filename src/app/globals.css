@@ -1,28 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  /* Clean dark theme */
-  --bg-primary: #0a0f1a;
-  --bg-secondary: #111827;
-  --bg-card: #1f2937;
-  --bg-card-hover: #374151;
-  --bg-input: #111827;
+  /* Professional Light Theme */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-input: #ffffff;
 
-  --border-color: #374151;
-  --border-subtle: #1f2937;
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
 
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-muted: #9ca3af;
-  --text-dim: #6b7280;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
 
-  /* Accent colors */
-  --accent-blue: #3b82f6;
-  --accent-green: #10b981;
-  --accent-yellow: #f59e0b;
-  --accent-red: #ef4444;
-  --accent-cyan: #06b6d4;
-  --accent-purple: #8b5cf6;
+  /* Professional Blue Accents */
+  --accent-blue: #2563eb;
+  --accent-green: #059669;
+  --accent-yellow: #d97706;
+  --accent-red: #dc2626;
+  --accent-cyan: #0891b2;
+  --accent-purple: #7c3aed;
 }
 
 * {
@@ -34,9 +34,10 @@
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 /* ========================================
@@ -50,6 +51,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .app-logo {
@@ -104,8 +106,8 @@ body {
   display: inline-flex;
   gap: 4px;
   padding: 4px;
-  background: var(--bg-secondary);
-  border-radius: 12px;
+  background: var(--bg-primary);
+  border-radius: 10px;
   border: 1px solid var(--border-color);
   margin-bottom: 32px;
 }
@@ -114,8 +116,8 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-muted);
@@ -133,6 +135,7 @@ body {
 .nav-pill.active {
   background: var(--accent-blue);
   color: white;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
 }
 
 /* ========================================
@@ -149,14 +152,14 @@ body {
 .result-box {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 10px;
+  padding: 20px;
   text-align: center;
 }
 
 .result-box.highlight {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
-  border-color: rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(5, 150, 105, 0.03));
+  border-color: rgba(5, 150, 105, 0.3);
 }
 
 .result-label {
@@ -185,8 +188,8 @@ body {
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  margin-bottom: 32px;
+  border-radius: 12px;
+  margin-bottom: 24px;
 }
 
 .card-header {
@@ -248,14 +251,14 @@ body {
 
 .input-field {
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .input-field:hover {
@@ -265,6 +268,7 @@ body {
 .input-field:focus {
   outline: none;
   border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .input-prefix, .input-suffix {
@@ -284,10 +288,10 @@ body {
 
 /* Output/Calculated Display */
 .output-box {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border: 1px dashed var(--border-color);
-  border-radius: 8px;
-  padding: 12px 16px;
+  border-radius: 6px;
+  padding: 12px 14px;
   text-align: center;
 }
 
@@ -320,20 +324,21 @@ body {
 }
 
 .chip {
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 6px 14px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
   border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   color: var(--text-secondary);
 }
 
 .chip:hover {
   border-color: var(--accent-blue);
-  color: var(--text-primary);
+  color: var(--accent-blue);
+  background: rgba(37, 99, 235, 0.05);
 }
 
 .chip.active {
@@ -347,10 +352,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 6px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
   border: none;
@@ -359,16 +364,23 @@ body {
 .btn-primary {
   background: var(--accent-blue);
   color: white;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
 }
 
 .btn-primary:hover {
-  background: #2563eb;
+  background: #1d4ed8;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
 }
 
 .btn-secondary {
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--text-dim);
 }
 
 .btn-ghost {
@@ -378,11 +390,11 @@ body {
 
 .btn-ghost:hover {
   color: var(--text-primary);
-  background: var(--bg-card);
+  background: var(--bg-card-hover);
 }
 
 .btn-sm {
-  padding: 8px 16px;
+  padding: 6px 12px;
   font-size: 13px;
 }
 
@@ -393,8 +405,8 @@ body {
 .metric-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .metric-card.success { border-left: 3px solid var(--accent-green); }
@@ -529,29 +541,31 @@ body {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .badge-success {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(5, 150, 105, 0.1);
   color: var(--accent-green);
 }
 
 .badge-warning {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(217, 119, 6, 0.1);
   color: var(--accent-yellow);
 }
 
 .badge-danger {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(220, 38, 38, 0.1);
   color: var(--accent-red);
 }
 
 .badge-info {
-  background: rgba(6, 182, 212, 0.15);
+  background: rgba(8, 145, 178, 0.1);
   color: var(--accent-cyan);
 }
 
@@ -561,18 +575,18 @@ body {
 
 .upload-zone {
   border: 2px dashed var(--border-color);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 48px;
   text-align: center;
   cursor: pointer;
   transition: all 0.15s;
-  background: var(--bg-secondary);
+  background: var(--bg-card);
 }
 
 .upload-zone:hover,
 .upload-zone.active {
   border-color: var(--accent-blue);
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(37, 99, 235, 0.03);
 }
 
 /* ========================================
@@ -580,8 +594,8 @@ body {
    ======================================== */
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: 3px solid var(--border-color);
   border-top-color: var(--accent-blue);
   border-radius: 50%;
@@ -624,8 +638,8 @@ body {
 .quick-stat {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 16px 20px;
+  border-radius: 8px;
+  padding: 14px 18px;
   text-align: center;
 }
 
@@ -653,7 +667,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
