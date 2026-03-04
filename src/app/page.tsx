@@ -13,9 +13,9 @@ import ReverseAnalysis from '@/components/ReverseAnalysis';
 import NapkinCalculator, { NapkinData } from '@/components/NapkinCalculator';
 import ManualEntry from '@/components/ManualEntry';
 import ExportButton from '@/components/ExportButton';
-import { Building2, FileText, Calculator, PenLine, Upload, ArrowLeft, BarChart3 } from 'lucide-react';
+import { FileText, Calculator, Upload, ArrowLeft, BarChart3 } from 'lucide-react';
 
-type EntryMode = 'napkin' | 'upload' | 'manual';
+type EntryMode = 'select' | 'napkin' | 'upload';
 
 const tabs = [
   { id: 'overview', label: 'Overview' },
@@ -30,7 +30,7 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [entryMode, setEntryMode] = useState<EntryMode>('napkin');
+  const [entryMode, setEntryMode] = useState<EntryMode>('select');
   const [showDetailedView, setShowDetailedView] = useState(false);
 
   useEffect(() => {
@@ -122,6 +122,7 @@ export default function Home() {
     setDealData(null);
     setShowDetailedView(false);
     setScenarios([]);
+    setEntryMode('select');
   };
 
   return (
@@ -147,69 +148,84 @@ export default function Home() {
       </header>
 
       <main className="flex-1 p-6 md:p-8 max-w-[1600px] mx-auto w-full">
-        {/* Mode Selection */}
-        {!showDetailedView && (
-          <div className="space-y-8">
-            {/* Hero Section */}
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-2">Multifamily Deal Analyzer</h1>
-              <p className="text-[var(--text-secondary)]">
-                Quick underwriting for multifamily acquisitions
+        {/* Landing Page - Mode Selection */}
+        {!showDetailedView && entryMode === 'select' && (
+          <div className="flex flex-col items-center justify-center min-h-[70vh]">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold mb-3">Multifamily Deal Analyzer</h1>
+              <p className="text-lg text-[var(--text-secondary)]">
+                Underwrite apartment acquisitions in minutes
               </p>
             </div>
 
-            {/* Entry Mode Tabs */}
-            <div className="flex justify-center mb-8">
-              <div className="nav-pills">
-                <button
-                  onClick={() => setEntryMode('napkin')}
-                  className={`nav-pill ${entryMode === 'napkin' ? 'active' : ''}`}
-                >
-                  <Calculator size={18} />
-                  Quick Calculator
-                </button>
-                <button
-                  onClick={() => setEntryMode('upload')}
-                  className={`nav-pill ${entryMode === 'upload' ? 'active' : ''}`}
-                >
-                  <Upload size={18} />
-                  Upload OM
-                </button>
-                <button
-                  onClick={() => setEntryMode('manual')}
-                  className={`nav-pill ${entryMode === 'manual' ? 'active' : ''}`}
-                >
-                  <PenLine size={18} />
-                  Build Proforma
-                </button>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl w-full">
+              {/* Upload OM Card */}
+              <button
+                onClick={() => setEntryMode('upload')}
+                className="group p-10 rounded-2xl border-2 border-[var(--border-color)] bg-[var(--bg-card)] hover:border-[var(--accent-blue)] hover:bg-[var(--bg-card-hover)] transition-all text-left"
+              >
+                <div className="w-16 h-16 rounded-xl bg-[var(--accent-blue)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent-blue)]/20 transition-colors">
+                  <Upload size={32} className="text-[var(--accent-blue)]" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">Upload an OM</h2>
+                <p className="text-[var(--text-muted)]">
+                  Upload a PDF or Excel offering memorandum and let AI extract the key data automatically
+                </p>
+              </button>
+
+              {/* Quick Underwriting Card */}
+              <button
+                onClick={() => setEntryMode('napkin')}
+                className="group p-10 rounded-2xl border-2 border-[var(--border-color)] bg-[var(--bg-card)] hover:border-[var(--accent-green)] hover:bg-[var(--bg-card-hover)] transition-all text-left"
+              >
+                <div className="w-16 h-16 rounded-xl bg-[var(--accent-green)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent-green)]/20 transition-colors">
+                  <Calculator size={32} className="text-[var(--accent-green)]" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">Quick Underwriting</h2>
+                <p className="text-[var(--text-muted)]">
+                  Napkin math calculator for fast deal screening with units, rent, and expense ratio
+                </p>
+              </button>
             </div>
+          </div>
+        )}
 
-            {/* Napkin Calculator Mode */}
-            {entryMode === 'napkin' && (
-              <NapkinCalculator
-                initialData={dealData}
-                onExpandToDetailed={handleExpandToDetailed}
+        {/* Napkin Calculator Mode */}
+        {!showDetailedView && entryMode === 'napkin' && (
+          <div className="space-y-6">
+            <button
+              onClick={() => setEntryMode('select')}
+              className="btn btn-ghost"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
+            <NapkinCalculator
+              initialData={dealData}
+              onExpandToDetailed={handleExpandToDetailed}
+            />
+          </div>
+        )}
+
+        {/* Upload Mode */}
+        {!showDetailedView && entryMode === 'upload' && (
+          <div className="space-y-6">
+            <button
+              onClick={() => setEntryMode('select')}
+              className="btn btn-ghost"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
+            <div className="max-w-2xl mx-auto space-y-6">
+              <ApiKeyInput apiKey={apiKey} onApiKeyChange={setApiKey} />
+              <FileUpload
+                apiKey={apiKey}
+                onDataParsed={handleDataParsed}
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
               />
-            )}
-
-            {/* Upload Mode */}
-            {entryMode === 'upload' && (
-              <div className="max-w-2xl mx-auto space-y-6">
-                <ApiKeyInput apiKey={apiKey} onApiKeyChange={setApiKey} />
-                <FileUpload
-                  apiKey={apiKey}
-                  onDataParsed={handleDataParsed}
-                  isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                />
-              </div>
-            )}
-
-            {/* Manual Entry Mode */}
-            {entryMode === 'manual' && (
-              <ManualEntry onSubmit={handleDataParsed} />
-            )}
+            </div>
           </div>
         )}
 
