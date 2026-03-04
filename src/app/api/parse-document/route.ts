@@ -5,51 +5,49 @@ import { PARSE_DOCUMENT_SYSTEM_PROMPT } from '@/lib/prompts';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    let documentText = formData.get('text') as string | null;
+    const textContent = formData.get('text') as string | null;
     const file = formData.get('file') as File | null;
 
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
-      return NextResponse.json({ error: 'Gemini API key not configured. Check Vercel environment variables.' }, { status: 500 });
+      return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-    // If PDF file was uploaded, extract text
-    if (file && !documentText && file.name.toLowerCase().endsWith('.pdf')) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const pdfParse = (await import('pdf-parse')).default;
-      const pdfData = await pdfParse(buffer);
-      documentText = pdfData.text;
+    let result;
+
+    if (textContent) {
+      // Excel was pre-processed to text
+      const prompt = `${PARSE_DOCUMENT_SYSTEM_PROMPT}\n\nAnalyze this document:\n\n${textContent.slice(0, 50000)}`;
+      result = await model.generateContent(prompt);
+    } else if (file) {
+      // Send PDF directly to Gemini (native PDF support)
+      const bytes = await file.arrayBuffer();
+      const base64 = Buffer.from(bytes).toString('base64');
+
+      result = await model.generateContent([
+        {
+          inlineData: {
+            mimeType: file.type || 'application/pdf',
+            data: base64,
+          },
+        },
+        { text: PARSE_DOCUMENT_SYSTEM_PROMPT },
+      ]);
+    } else {
+      return NextResponse.json({ error: 'No document provided' }, { status: 400 });
     }
 
-    // For non-PDF files or text content, use text-based parsing
-    if (file && !documentText) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const pdfParse = (await import('pdf-parse')).default;
-      const pdfData = await pdfParse(buffer);
-      documentText = pdfData.text;
-    }
-
-    if (!documentText) {
-      return NextResponse.json({ error: 'No document content provided' }, { status: 400 });
-    }
-
-    const prompt = `${PARSE_DOCUMENT_SYSTEM_PROMPT}\n\nAnalyze this document:\n\n${documentText.slice(0, 50000)}`;
-    const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-
     return processResponse(responseText);
   } catch (error: unknown) {
-    let errMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Parse document error:', errMessage);
 
-    // User-friendly error messages
     if (errMessage.includes('429') || errMessage.includes('quota')) {
-      errMessage = 'Rate limit reached. Please wait a minute and try again.';
-    } else if (errMessage.includes('API key')) {
-      errMessage = 'Invalid API key. Please check configuration.';
+      return NextResponse.json({ error: 'Rate limit reached. Please wait a minute and try again.' }, { status: 429 });
     }
 
     return NextResponse.json({ error: errMessage }, { status: 500 });
@@ -57,7 +55,6 @@ export async function POST(request: NextRequest) {
 }
 
 function processResponse(responseText: string) {
-  // Extract JSON from response
   let jsonStr = responseText;
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   if (jsonMatch) jsonStr = jsonMatch[0];
@@ -66,11 +63,9 @@ function processResponse(responseText: string) {
   try {
     parsed = JSON.parse(jsonStr);
   } catch {
-    console.error('Failed to parse JSON. Raw response:', responseText.slice(0, 500));
     throw new Error('Failed to parse AI response. Please try again.');
   }
 
-  // Ensure all required fields have defaults
   const data = {
     property: {
       name: parsed.property?.name || 'Unknown Property',
@@ -82,7 +77,7 @@ function processResponse(responseText: string) {
       occupancyRate: parsed.property?.occupancyRate || null,
     },
     askingPrice: parsed.askingPrice || 0,
-    pricePerUnit: parsed.pricePerUnit || (parsed.askingPrice && parsed.property?.totalUnits ? parsed.askingPrice / parsed.property.totalUnits : 0),
+    pricePerUnit: parsed.pricePerUnit || 0,
     pricePerSF: parsed.pricePerSF || 0,
     rentRoll: parsed.rentRoll || [],
     grossPotentialRent: parsed.grossPotentialRent || 0,
@@ -97,7 +92,7 @@ function processResponse(responseText: string) {
     replacementReserves: parsed.replacementReserves || 0,
     netOperatingIncome: parsed.netOperatingIncome || 0,
     loanTerms: {
-      loanAmount: parsed.loanTerms?.loanAmount || parsed.askingPrice * 0.75,
+      loanAmount: parsed.loanTerms?.loanAmount || 0,
       interestRate: parsed.loanTerms?.interestRate || 6.5,
       termYears: parsed.loanTerms?.termYears || 10,
       amortizationYears: parsed.loanTerms?.amortizationYears || 30,
