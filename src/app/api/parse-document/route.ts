@@ -64,7 +64,13 @@ function processResponse(responseText: string) {
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   if (jsonMatch) jsonStr = jsonMatch[0];
 
-  const parsed = JSON.parse(jsonStr);
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch {
+    console.error('Failed to parse JSON. Raw response:', responseText.slice(0, 500));
+    throw new Error('Failed to parse AI response. Please try again.');
+  }
 
   // Ensure all required fields have defaults
   const data = {
