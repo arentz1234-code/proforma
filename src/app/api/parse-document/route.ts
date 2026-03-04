@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     let errMessage = error instanceof Error ? error.message : 'Unknown error';
 
+    console.error('Parse document error:', error);
+    console.error('Error message:', errMessage);
+
     // Provide more helpful error messages
     if (errMessage.includes('API_KEY') || errMessage.includes('API key') || errMessage.includes('401')) {
       errMessage = 'Invalid API key. Please check your Google Gemini API key and try again.';
@@ -51,9 +54,10 @@ export async function POST(request: NextRequest) {
       errMessage = 'Rate limit exceeded. Please wait a moment and try again.';
     } else if (errMessage.includes('timeout') || errMessage.includes('DEADLINE')) {
       errMessage = 'Request timed out. Please try again.';
+    } else if (errMessage.includes('pattern')) {
+      errMessage = 'API configuration error. Please check server logs.';
     }
 
-    console.error('Parse document error:', error);
     return NextResponse.json({ error: errMessage }, { status: 500 });
   }
 }
