@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { PARSE_DOCUMENT_SYSTEM_PROMPT } from '@/lib/prompts';
+import * as XLSX from 'xlsx';
 
-// Vercel serverless config
+// Railway/Node.js config - no body size limits
 export const runtime = 'nodejs';
-export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse JSON body (text extracted client-side)
-    let body;
-    try {
-      body = await request.json();
-    } catch (e) {
-      return NextResponse.json({ error: 'Failed to parse request body' }, { status: 400 });
-    }
+    const formData = await request.formData();
+    const file = formData.get('file') as File | null;
 
-    const textContent = body.text as string | null;
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
 
     const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
     if (!apiKey) {
@@ -24,39 +21,78 @@ export async function POST(request: NextRequest) {
     }
 
     const client = new Anthropic({ apiKey });
+    const fileName = file.name.toLowerCase();
 
-    if (!textContent) {
-      return NextResponse.json({ error: 'No document text provided' }, { status: 400 });
-    }
-
-    // Analyze document with Claude
     let result;
-    try {
+
+    if (fileName.endsWith('.pdf')) {
+      // Send PDF directly to Claude using document support
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+
       result = await client.messages.create({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
+        max_tokens: 8192,
         system: PARSE_DOCUMENT_SYSTEM_PROMPT,
         messages: [
           {
             role: 'user',
-            content: `Analyze this document:\n\n${textContent.slice(0, 100000)}`
-          }
-        ]
+            content: [
+              {
+                type: 'document',
+                source: {
+                  type: 'base64',
+                  media_type: 'application/pdf',
+                  data: base64,
+                },
+              },
+              {
+                type: 'text',
+                text: 'Analyze this offering memorandum and extract all the data requested.',
+              },
+            ],
+          },
+        ],
       });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Unknown';
-      if (msg.includes('rate_limit') || msg.includes('429')) {
-        return NextResponse.json({ error: 'Rate limit reached. Please wait a minute.' }, { status: 429 });
-      }
-      return NextResponse.json({ error: `Analysis failed: ${msg}` }, { status: 500 });
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      // Convert Excel to text
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheets: string[] = [];
+      workbook.SheetNames.forEach(name => {
+        const sheet = workbook.Sheets[name];
+        sheets.push(`=== Sheet: ${name} ===`);
+        sheets.push(XLSX.utils.sheet_to_csv(sheet));
+      });
+      const textContent = sheets.join('\n\n');
+
+      result = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8192,
+        system: PARSE_DOCUMENT_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: `Analyze this offering memorandum and extract all the data requested:\n\n${textContent}`,
+          },
+        ],
+      });
+    } else {
+      return NextResponse.json({ error: 'Unsupported file type. Please upload PDF or Excel.' }, { status: 400 });
     }
 
     // Extract text from response
     const responseText = result.content[0].type === 'text' ? result.content[0].text : '';
     return processResponse(responseText);
   } catch (error: unknown) {
+    console.error('Parse document error:', error);
     const errMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: errMessage, step: 'unknown' }, { status: 500 });
+
+    if (errMessage.includes('rate_limit') || errMessage.includes('429')) {
+      return NextResponse.json({ error: 'Rate limit reached. Please wait a minute.' }, { status: 429 });
+    }
+
+    return NextResponse.json({ error: errMessage }, { status: 500 });
   }
 }
 
@@ -69,6 +105,7 @@ function processResponse(responseText: string) {
   try {
     parsed = JSON.parse(jsonStr);
   } catch {
+    console.error('Failed to parse response:', responseText);
     throw new Error('Failed to parse AI response. Please try again.');
   }
 
