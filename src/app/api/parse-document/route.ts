@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { PARSE_DOCUMENT_SYSTEM_PROMPT } from '@/lib/prompts';
 
 // Vercel serverless config
@@ -18,33 +18,41 @@ export async function POST(request: NextRequest) {
 
     const textContent = body.text as string | null;
 
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
     if (!apiKey) {
       return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const client = new Anthropic({ apiKey });
 
     if (!textContent) {
       return NextResponse.json({ error: 'No document text provided' }, { status: 400 });
     }
 
-    // Analyze document with Gemini
+    // Analyze document with Claude
     let result;
     try {
-      const prompt = `${PARSE_DOCUMENT_SYSTEM_PROMPT}\n\nAnalyze this document:\n\n${textContent.slice(0, 100000)}`;
-      result = await model.generateContent(prompt);
+      result = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: PARSE_DOCUMENT_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: `Analyze this document:\n\n${textContent.slice(0, 100000)}`
+          }
+        ]
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown';
-      if (msg.includes('429') || msg.includes('quota')) {
+      if (msg.includes('rate_limit') || msg.includes('429')) {
         return NextResponse.json({ error: 'Rate limit reached. Please wait a minute.' }, { status: 429 });
       }
       return NextResponse.json({ error: `Analysis failed: ${msg}` }, { status: 500 });
     }
 
-    // Step 5: Process response
-    const responseText = result.response.text();
+    // Extract text from response
+    const responseText = result.content[0].type === 'text' ? result.content[0].text : '';
     return processResponse(responseText);
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : 'Unknown error';
