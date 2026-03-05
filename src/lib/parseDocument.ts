@@ -2,27 +2,36 @@ import { DealData } from '@/types';
 import * as XLSX from 'xlsx';
 
 async function extractPdfText(file: File): Promise<string> {
-  // Dynamically import pdf.js only on client side
-  const pdfjsLib = await import('pdfjs-dist');
-  // Use unpkg CDN which has the latest versions
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  try {
+    // Dynamically import pdf.js only on client side
+    const pdfjs = await import('pdfjs-dist');
 
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    // Set worker source using unpkg CDN which hosts npm packages
+    const version = pdfjs.version;
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
 
-  const textParts: string[] = [];
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+    const pdf = await loadingTask.promise;
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pageText = (textContent.items as any[])
-      .map((item) => item.str || '')
-      .join(' ');
-    textParts.push(`--- Page ${i} ---\n${pageText}`);
+    const textParts: string[] = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pageText = (textContent.items as any[])
+        .filter((item) => item && typeof item.str === 'string')
+        .map((item) => item.str)
+        .join(' ');
+      textParts.push(`--- Page ${i} ---\n${pageText}`);
+    }
+
+    return textParts.join('\n\n');
+  } catch (err) {
+    console.error('PDF extraction error:', err);
+    throw new Error(`Failed to extract PDF text: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
-
-  return textParts.join('\n\n');
 }
 
 export async function parseDocument(file: File): Promise<DealData> {
