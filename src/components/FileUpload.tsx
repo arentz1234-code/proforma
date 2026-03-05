@@ -35,7 +35,7 @@ export default function FileUpload({ onDataParsed, isProcessing, setIsProcessing
     setStatus('Reading document...');
 
     try {
-      setStatus('Analyzing with Gemini AI...');
+      setStatus('Analyzing with Claude AI...');
       const data = await parseDocument(file);
       setStatus('');
       onDataParsed(data);
