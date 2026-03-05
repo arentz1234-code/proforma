@@ -6,12 +6,16 @@ async function extractPdfText(file: File): Promise<string> {
     // Dynamically import pdf.js only on client side
     const pdfjs = await import('pdfjs-dist');
 
-    // Set worker source using unpkg CDN which hosts npm packages
-    const version = pdfjs.version;
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+    // Disable worker to avoid CDN/CORS issues - runs in main thread
+    pdfjs.GlobalWorkerOptions.workerSrc = '';
 
     const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+    const loadingTask = pdfjs.getDocument({
+      data: arrayBuffer,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    });
     const pdf = await loadingTask.promise;
 
     const textParts: string[] = [];
